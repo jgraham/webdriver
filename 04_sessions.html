@@ -94,15 +94,17 @@ context. This string is implementation defined but must not be
  which is one of <i>none</i>, <i>normal</i>, and <i>eager</i>.
  Unless stated otherwise, it is <i>normal</i>.
 
-<p>When required to <a>close the session</a> a <a>remote end</a> must
+<p>When required to <dfn>close the session</dfn> a <a>remote end</a> must
 perform the following steps:
 </p>
 
 <ol>
   <li><p><a href="https://html.spec.whatwg.org/#closing-browsing-contexts">Close</a>
-  any top-level browsing contexts associated with the session,
+  any top-level browsing contexts associated with the <a>session</a>,
   without <a href="https://html.spec.whatwg.org/#prompt-to-unload-a-document">promping
-  to unload</a></li>.
+  to unload</a>.</li>
+
+  <li><p>Discard all internal state associated with the <a>session</a>.</li>
 
   <li><p>Perform any implementation-specific cleanup steps.</p></li>
 </ol>
