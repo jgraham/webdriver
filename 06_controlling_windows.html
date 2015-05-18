@@ -1,21 +1,28 @@
 <section>
-<h2>Controlling Windows</h2>
+<h2>Command Contexts</h2>
 
-<p>WebDriver's use of the term “window” is equivalent to a
- <a href=https://html.spec.whatwg.org/#top-level-browsing-context>top-level
- browsing context</a>.  No distinction is made between windows or
- applications on the operating system level and user agent tabs.  This
- must not be confused with
- the <code><a href=https://html.spec.whatwg.org/#window>Window</a></code>
- object in [[!html51]].
+<section>
+  <h3>Introduction</h3>
 
-<p>WebDriver provides functionality to manipulate
- the user agent's operating system level windows through actions such as
- <a rel="Close Window">closing the window</a>,
- <a rel="Set Window Size">resizing</a>,
- <a rel="Maximize Window">maximizing</a>,
- and <a rel="Fullscreen Window">fullscreening</a> a window.
+  <p>Many WebDriver commands happen in the context of either
+    the <a>current browsing context</a> or <a>current top-level browsing
+      context</a>. The <a>current top-level browsing context</a> is
+    represened in the protocol by its associated <a>window
+      handle</a>. A top-level browsing context is selected using
+    the <a>Switch To Window</a> command. Once this is done, a
+    specific browsing context can be selected using the <a>Switch to
+      Frame</a> command.
 
+  <p class=note>The use of the term "window" to refer to a top-level
+    browsing context is legacy and doesn't correspond with either the
+    operating system notaion of a "window" or the DOM Window object.</p>
+
+  <p class=note>In accordance with
+    the <a href="http://www.w3.org/TR/html5/editing.html#focus">focus</a>
+    section of the [[!html51] spec, commands are unaffected by whether
+    the operating-system window has focus or not.</p>
+
+  </section>
  <section>
    <h3>Get Window Handle</h3>
 
@@ -127,7 +134,7 @@
           <li><p>If <var>handle</var> is equal to the
           associated <a>window handle</a> for some <a>top-level
           browsing context</a> in the current session, set the
-          session's <a>current top-level browsing context</a> to that
+          session's <a>current browsing context</a> to that
           browsing context and return <a>success</a> with data
           null.</li>
 
@@ -165,175 +172,117 @@
        <li>Return the result of running the <a>remote end steps</a> for the <a>Get Window Handles</a> command.
      </ol>
    </section>
-  </section>
 
-  <section>
-    <h2>Resizing and Positioning Windows</h2>
+   <section>
+     <h3>Switch to Frame</h3>
+     <table class="simple jsoncommand">
+       <tr>
+         <th>HTTP Method</th>
+         <th>Path Template</th>
+         <th>Notes</th>
+       </tr>
+       <tr>
+         <td>POST</td>
+         <td id='post-frame'>/session/{sessionId}/frame</td>
+         <td></td>
+       </tr>
+     </table>
+     <p>The <a>Switch to Frame</a> command is used to select a child
+     browsing context of the <a>current browsing context</a> to use as
+     the <a>current browsing context</a> for subsequent commands.</p>
+     <p>The <a>remote end steps</a> for the <dfn>Switch to Frame</dfn>
+     command are:</p>
+     <ol>
 
-    <section>
-      <h3>Introduction</h3>
-      <p>WebDriver provides commands for interacting with the
-      operating system window containing the current browsing
-      context. Because different operating systems, window managers
-      provide different abilities, not all of the commands in this
-      section can be supported by all remote ends. Where a command is
-      not supported, an <a>unsupported operation</a> error is
-      returned.</p>
-    </section>
-    <section>
+       <li><p>If the <a>current browsing context</a> is <a>no longer open</a>,
+           return an error with code <a>no such window</a>.</li>
 
-      <section>
-      <h3>Get Window Size</h3>
-        <p>
-          <table class="simple jsoncommand">
-            <tr>
-              <th>HTTP Method</th>
-              <th>Path Template</th>
-              <th>Notes</th>
-            </tr>
-            <tr>
-              <td>GET</td>
-              <td id='get-window_handle-size'>/session/{sessionId}/window/size</td>
-              <td></td>
-            </tr>
-          </table>
-        <p>The Get Window Size command returns the size of the
-        operating system window corresponding to the <a>current
-        top-level browsing context</a>.</p>
+       <li><p>Let <var>id</var> be the result of <a>getting a property</a> named "id"
+           from the <var>parameters</var> argument.</li>
 
-        <p>The <a>remote end steps</a> for <dfn>Get Window Size</dfn>
-        are:</p>
-        <ol>
-          <!-- Can this whole operation be unsupported? -->
-          <li><p>If the <a>current top level browsing context</a> is <a>no longer open</a>,
-              return an error with code <a>no such window</a>.</li>
-          <li><p>Let <var>width</var> be the width in CSS pixels of the OS
-              window containing the <a>current top-level browsing
-              context</a>, including any browser chrome and
-              externally drawn window decorations.</li>
-          <li><p>Let <var>height</var> be the height in CSS pixels of
-          the OS window containing the <a>current top-level browsing
-          context</a>, including any browser chrome and any externally
-          drawn window decorations.</li>
+       <li>
+         <p>If <var>id</var> is null:
+           <ol><li><p>Set the <a>current browsing context</a> to
+                 the <a>current top-level browsing context</a>.</li>
+           </ol>
+         <p>Otherwise if <var>id</var> is a <code>Number</code> object:</p>
+         <ol>
+           <li><p>If <var>id</var> is less than 0 or greater than
+           2<sup>16</sup> - 1, return <a>error</a> with status <a>no
+           such frame</a>.</li>
+           <li><p>Let <var>window</var> be the
+               <a href="https://html.spec.whatwg.org/#concept-document-window">associated
+                 window</a> of the <a>current browsing
+                 context</a>'s <a href="https://html.spec.whatwg.org/#active-document">active
+                 document.</a></li>
+           <li><p>If <var>id</var> is not
+               a <a href="http://heycam.github.io/webidl/#dfn-supported-property-indices">supported
+                 property index</a> of <var>window</var>,
+               return <a>error</a> with status <a>no such frame</a></li>
+           <li><p>Let <var>child window</var> be the <code>WindowProxy</code> object
+               obtained
+               by <a href="https://html.spec.whatwg.org/#dom-window-item">determining
+                 the value of an indexed property</a> of <var>window</var>
+               with index <var>id</var>.</li>
+           <li><p>Set the <a>current browsing context</a> to <var>new
+           window</var>'s browsing context.</li>
+         </ol>
+         <p>Otherwise, if <var>id</var> <a>represents a WebElement</a>:
+           <ol>
+             <!-- note that representing a web element will have to do --
+               -- same document checks, or something -->
+             <li><p>Let <var>element</var> be the element <a>represented
+                   by</a> <var>id</var>.</li>
+             <li><p>If <var>element</var> is not a <code>frame</code>
+             or <code>iframe</code> element, return <a>error</a> with
+             status <a>no such frame</a>.</li>
+             <li><p>Set the <a>current browsing context</a> to element's
+             <a href="https://html.spec.whatwg.org/#nested-browsing-context">nested
+             browsing context</a>.</li>
+           </ol>
+           <p>Otherwise:
+             <ol>
+               <li><p>Return <a>error</a> with status <a>no such
+               frame</a>.</li>
+             </ol>
+       </li>
+       <li><p>Return <a>success</a> with data null</li>
+     </ol>
+     <p class=note>WebDriver is not bound by the same origin policy,
+     so it is always possible to switch into child browsing contexts,
+     even if they are different origin to the current browsing context.</p>
+   </section>
+   <section>
+     <h3>Switch to Parent Frame</h3>
 
-          <li><p>Let <var>data</var> be a new JSON Object.</li>
-
-          <li><p>Set the property <code>width</code> on <var>data</var>
-              to <var>width</var>.</li>
-
-          <li><p>Set the property <code>height</code> on <var>data</var>
-              to <var>height</var>.</li>
-
-          <li><p>Return <a>success</a> with data <var>data</var>
-        </ol>
-      </section>
-
-      <!-- setWindowSize() -->
-      <h3>setWindowSize()</h3>
-        <p>
-          <table class="simple jsoncommand">
-            <tr>
-              <th>HTTP Method</th>
-              <th>Path Template</th>
-              <th>Notes</th>
-            </tr>
-            <tr>
-              <td>POST</td>
-              <td id='post-window_handle-size'>/session/{sessionId}/window/size</td>
-              <td></td>
-            </tr>
-          </table>
-        <p>
-        Resizes the OS window currently receiving commands to have the <code>height</code> and <code>width</code> passed in as parameters.
-        <p>If a request is made to resize a OS window to a size which cannot be performed (e.g. the browser has a minimum, or fixed OS window size, or the operating system does not support resizing windows at all as is the case in many phone OSs), an <code><a href="#status-unsupported-operation">unsupported operation</a></code> status code MUST be returned.</p>
-        <p>After <code>setWindowSize</code>, the browser window MUST NOT be in the maximised state.</p>
-        <dl class='parameters'>
-          <dt>unsigned double width</dt>
-          <dd>The "width" value refer to the javascript <code>window.outerwidth</code> property. If the User Agent does not support this property, it represents the width of the whole OS window including window chrome and window resizing borders/handles.</li></dd>
-          <dt>unsigned double height</dt>
-          <dd>The "height" value refer to the javascript <code>window.outerheight</code> property. If the User Agent does not support this property, it represents the width of the whole OS window including window chrome and window resizing borders/handles.</li></dd>
-
-      </section>
-
-
-      <section>
-      <h3>Maximize Window</h3>
-      <table class="simple jsoncommand">
-        <tr>
-          <th>HTTP Method</th>
-          <th>Path Template</th>
-          <th>Notes</th>
-        </tr>
-        <tr>
-          <td>POST</td>
-          <td id='get-window_handle-maximize'>/session/{sessionId}/window/maximize</td>
-          <td></td>
-        </tr>
-      </table>
-      <p>The <a>Maximize Window</a> command invokes the window
-      manager-specific "maximize" operation, if any, on the window
-      containing the <a>current top-level browsing context</a>. This
-      typically increases the window to the maximum available size
-      without going full-screen.</p>
-      <p>The <a>remote end steps</a> for <dfn>Maximise Window</dfn>
-        are:</p>
-      <ol>
-          <li><p>If the <a>current top level browsing context</a>
-              is <a>no longer open</a>, return an <a>error</a> with
-              code <a>no such window</a>.</li>
-          <li><p>If the <a>remote end</a> does not support the
-               <a>Maximize Window</a> command for the <a>current top
-              level browsing context</a> for any reason, return an
-              error with code <a>unsupported operation</a>.</li>
-          <li><p>Run the implementation-specific steps to complete the
-          <a>Maximize</a> command,
-          which should have the effect of maximizing the dimensions of
-          the window containing the <a>current active top-level
-          browsing context</a> without making the window full-screen, if the
-          window manager distinguishes between maximized and
-          full-screen windows.</li>
-          <li><p>Return <a>success</a> with data null</li>
-      </ol>
-      </section>
-
-      <section>
-      <h3>Fullscreen Window</h3>
-      <table class="simple jsoncommand">
-        <tr>
-          <th>HTTP Method</th>
-          <th>Path Template</th>
-          <th>Notes</th>
-        </tr>
-        <tr>
-          <td>POST</td>
-          <td id='get-window_handle-maximize'>/session/{sessionId}/window/maximize</td>
-          <td></td>
-        </tr>
-      </table>
-      <p>The <a>Fullscreen Window</a> command invokes the window
-      manager-specific "full screen" operation, if any, on the window
-      containing the <a>current top-level browsing context</a>. This
-      typically increases the window to the size of the physical
-      display and can hide browser UI elements such as toolbars.</p>
-      <p>The <a>remote end steps</a> for <dfn>Fullscreen Window</dfn>
-        are:</p>
-      <ol>
-          <li><p>If the <a>current top level browsing context</a>
-              is <a>no longer open</a>, return an <a>error</a> with
-              code <a>no such window</a>.</li>
-          <li><p>If the <a>remote end</a> does not support the
-               <a>Fullscreen Window</a> command for the <a>current top
-              level browsing context</a> for any reason, return an
-              error with code <a>unsupported operation</a>.</li>
-          <li><p>Run the implementation-specific <a>Fullscreen
-          Window</a> steps, which should have the effect of making the
-          dimensions of the window containing the <a>current top-level
-          browsing context</a> as close as possible to the dimensions
-          of the display containing the window dimensions, and may
-          hide browser-provided chrome such as toolbars.</li>
-          <li><p>Return <a>success</a> with data null</li>
-      </ol>
-
-    </section>
-  </section>
+     <table class="simple jsoncommand">
+       <tr>
+         <th>HTTP Method</th>
+         <th>Path Template</th>
+         <th>Notes</th>
+       </tr>
+       <tr>
+         <td>POST</td>
+         <td id='post-frame-parent'>/session/{sessionId}/frame/parent</td>
+         <td></td>
+       </tr>
+     </table>
+     <p>The <a>Switch to Parent Frame</a> command sets the <a>current
+     browsing context</a> for future commands to the parent of
+     the <a>current browsing context</a>.</p>
+     <p>The <a>remote end steps</a> for <dfn>Switch to Parent
+     Frame</dfn> are:</p>
+     <ol>
+       <li><p>If the <a>current browsing context</a> is <a>no longer open</a>,
+           return an error with code <a>no such window</a>.</li>
+       <li><p>If the <a>current browsing context</a> is not equal to
+       the <a>current top-level browsing context</a>, set
+       the <a>current browsing context</a> to
+       the <a href="https://html.spec.whatwg.org/#parent-browsing-context">parent
+       browsing context</a> of the <a>current browsing
+       context</a>.</li>
+       <li><p>Return <a>success</a> with data null</li>
+     </ol>
+   </section>
 </section>
+
